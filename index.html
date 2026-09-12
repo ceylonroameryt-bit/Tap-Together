@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="Tap Together — quick real-time two-player games for couples and friends anywhere in the world." />
+  <title>Tap Together</title>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Tap Together home">
+        <span class="brand-mark">TT</span>
+        <span>
+          <strong>Tap Together</strong>
+          <small>play from anywhere</small>
+        </span>
+      </a>
+      <div class="status-pill" id="connectionStatus" data-state="offline">
+        <span class="status-dot"></span>
+        <span id="statusText">Offline</span>
+      </div>
+    </header>
+
+    <section id="homeView" class="view active">
+      <div class="hero-card panel">
+        <div class="eyebrow">Two players · real time · no account</div>
+        <h1>Small games.<br><span>Big competition.</span></h1>
+        <p>Open this page on two devices, create a room, share the six-character code, and start playing instantly.</p>
+        <div class="name-row">
+          <label for="playerName">Your name</label>
+          <input id="playerName" maxlength="18" autocomplete="nickname" placeholder="Player 1" />
+        </div>
+        <div class="lobby-actions">
+          <button class="btn primary" id="createRoomBtn">Create room</button>
+          <div class="join-group">
+            <input id="roomCodeInput" maxlength="6" autocomplete="off" spellcheck="false" placeholder="ROOM CODE" />
+            <button class="btn secondary" id="joinRoomBtn">Join</button>
+          </div>
+        </div>
+        <p class="microcopy">Connections are peer-to-peer. No sign-up and no game data is stored by this site.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="mini-card"><span>⚡</span><div><strong>Tap Rush</strong><small>Tap faster than your opponent.</small></div></article>
+        <article class="mini-card"><span>🎯</span><div><strong>Reaction Duel</strong><small>Wait for green. First reflex wins.</small></div></article>
+        <article class="mini-card"><span>✊</span><div><strong>RPS Arena</strong><small>Rock, paper, scissors — best of luck.</small></div></article>
+      </div>
+    </section>
+
+    <section id="roomView" class="view">
+      <div class="room-header panel">
+        <div>
+          <span class="eyebrow">Room</span>
+          <div class="room-code-line">
+            <strong id="roomCodeDisplay">------</strong>
+            <button class="icon-btn" id="copyRoomBtn" title="Copy room code">Copy</button>
+          </div>
+        </div>
+        <button class="btn ghost" id="leaveRoomBtn">Leave room</button>
+      </div>
+
+      <div class="players-grid">
+        <div class="player-card you">
+          <span class="player-badge">YOU</span>
+          <div class="avatar" id="myAvatar">P</div>
+          <strong id="myName">Player 1</strong>
+          <small id="myReadyText">Ready</small>
+        </div>
+        <div class="versus">VS</div>
+        <div class="player-card opponent" id="opponentCard">
+          <span class="player-badge">RIVAL</span>
+          <div class="avatar muted" id="opponentAvatar">?</div>
+          <strong id="opponentName">Waiting…</strong>
+          <small id="opponentReadyText">Share the code</small>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div><span class="eyebrow">Choose a game</span><h2>Game shelf</h2></div>
+        <small id="hostHint">Waiting for another player</small>
+      </div>
+
+      <div class="game-grid">
+        <button class="game-card" data-game="tap">
+          <span class="game-icon">⚡</span>
+          <span class="game-copy"><strong>Tap Rush</strong><small>10-second speed battle</small></span>
+          <span class="arrow">→</span>
+        </button>
+        <button class="game-card" data-game="reaction">
+          <span class="game-icon">🎯</span>
+          <span class="game-copy"><strong>Reaction Duel</strong><small>Fastest reflex wins</small></span>
+          <span class="arrow">→</span>
+        </button>
+        <button class="game-card" data-game="rps">
+          <span class="game-icon">✊</span>
+          <span class="game-copy"><strong>RPS Arena</strong><small>Classic head-to-head</small></span>
+          <span class="arrow">→</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="gameView" class="view">
+      <div class="game-topbar">
+        <button class="btn ghost" id="backToRoomBtn">← Games</button>
+        <div id="gameTitle" class="game-title">Game</div>
+        <div class="score-chip"><span id="sessionScoreMe">0</span> : <span id="sessionScoreThem">0</span></div>
+      </div>
+      <div id="gameStage" class="game-stage panel"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
