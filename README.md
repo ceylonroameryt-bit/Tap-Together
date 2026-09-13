@@ -35,3 +35,9 @@ The repository includes a GitHub Pages Actions workflow in `.github/workflows/pa
 ## Notes
 
 Peer-to-peer connectivity depends on WebRTC support and the networks used by both players. Some restrictive corporate, school, carrier, or VPN networks can block direct peer connections.
+
+## Redesigned 12-game 3D arcade
+
+The complete redesigned React/Three.js arcade is in [arcade-3d/](arcade-3d/README.md). It includes twelve distinct game worlds, three solo modes, online rooms, and the gardening and fishing games. This version uses a Cloudflare Worker and D1 database; it needs its own server deployment. The existing root app and its deployment setup are retained.
+
+The latest hosted version is at https://bunny-turtle-race.sujampathir.chatgpt.site (currently owner-private). Public hosting instructions are in [arcade-3d/hosting/cloudflare/START-HERE.md](arcade-3d/hosting/cloudflare/START-HERE.md).

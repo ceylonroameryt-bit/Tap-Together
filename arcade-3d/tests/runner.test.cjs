@@ -1,0 +1,11 @@
+const fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript'),assert=require('node:assert/strict');
+const moduleOut={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/runner.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{module:moduleOut,exports:moduleOut.exports});const r=moduleOut.exports;
+const now=10000,round=1,h=r.hurdle(0,round);
+const grounded=r.newRunner();grounded.distance=h.distance-.1;grounded.lane=h.lane;r.stepRunner(grounded,now,now+50,round);assert.equal(grounded.hits,1);assert(grounded.slowUntil>now);
+const jumping=r.newRunner();jumping.distance=h.distance-.1;jumping.lane=h.lane;r.controlRunner(jumping,'jump',now-500);r.stepRunner(jumping,now,now+50,round);assert.equal(jumping.hits,0,'jump clears hurdle');
+const dodging=r.newRunner();dodging.distance=h.distance-.1;dodging.lane=h.lane===1?0:1;r.stepRunner(dodging,now,now+50,round);assert.equal(dodging.hits,0,'other lane avoids collision');
+const dash=r.newRunner();r.controlRunner(dash,'boost',now);const expiry=dash.boostUntil;r.controlRunner(dash,'boost',now+100);assert.equal(dash.boostUntil,expiry,'boost has cooldown');assert(r.runnerSpeed(dash,now)>r.runnerSpeed(dash,now+2000));
+for(let i=0;i<5;i++)r.controlRunner(dash,'left',now);assert.equal(dash.lane,-1);for(let i=0;i<5;i++)r.controlRunner(dash,'right',now);assert.equal(dash.lane,1);
+const a=r.newRunner(),b=r.newRunner();a.distance=b.distance=r.TRACK_LENGTH-.1;const outcome=r.advanceRunners([a,b],now,now+100,round);assert.equal(outcome.winner,-1,'simultaneous finish is a tie');assert(a.distance<=r.TRACK_LENGTH);
+const item=r.star(0,round),collector=r.newRunner();collector.distance=item.distance-.1;collector.lane=item.lane;r.stepRunner(collector,now,now+50,round);r.stepRunner(collector,now+50,now+100,round);assert.equal(collector.stars,1,'star collected once');
+console.log('3D runner collision, jump clearance, lane dodge, boost cooldown, lane bounds, fair finish and star collection passed');

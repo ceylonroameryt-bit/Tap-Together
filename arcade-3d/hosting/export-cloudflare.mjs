@@ -1,0 +1,18 @@
+import {cp,mkdir,readFile,writeFile,access,rm} from 'node:fs/promises';
+import path from 'node:path';
+import {randomBytes} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const dest=path.resolve(process.argv[2]||path.join(root,'outputs','tap-together-cloudflare'));
+await access(path.join(root,'dist/server/index.js'));
+await mkdir(dest,{recursive:true});
+await cp(path.join(root,'dist/server'),path.join(dest,'server'),{recursive:true});
+await cp(path.join(root,'dist/client'),path.join(dest,'client'),{recursive:true});
+await cp(path.join(root,'drizzle'),path.join(dest,'migrations'),{recursive:true});
+await cp(path.join(root,'hosting/cloudflare'),dest,{recursive:true});
+await rm(path.join(dest,'server/wrangler.json'),{force:true});
+const name='tap-together-'+randomBytes(3).toString('hex');
+const config={name,main:'server/index.js',compatibility_date:'2026-05-15',compatibility_flags:['nodejs_compat'],no_bundle:true,workers_dev:true,rules:[{type:'ESModule',globs:['**/*.js','**/*.mjs']}],assets:{directory:'client'},observability:{enabled:false}};
+await writeFile(path.join(dest,'wrangler.json'),JSON.stringify(config,null,2)+'\n');
+await writeFile(path.join(dest,'package.json'),JSON.stringify({name:'tap-together-cloudflare',private:true,type:'module',engines:{node:'>=22.13.0'},scripts:{deploy:'node publish.mjs'},dependencies:{wrangler:'4.92.0'}},null,2)+'\n');
+console.log(dest);
