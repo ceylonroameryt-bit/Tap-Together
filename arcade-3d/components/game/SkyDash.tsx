@@ -1,4 +1,5 @@
 'use client';
+import {installWeather} from '@/game/weather/WeatherEffects';
 import {useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
 import type {GameView} from '@/lib/game';
@@ -44,6 +45,7 @@ export default function SkyDash({state,now,onMove}:Props){
   let disposed=false,frame=0,last=performance.now(),lastHud=0,initial=true,lastRound=-1;const positions=[0,0],xs=[-.45,.45],look=new THREE.Vector3();
   const resize=new ResizeObserver(()=>{const w=container.clientWidth,h=container.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();});resize.observe(container);
   const contextLost=(e:Event)=>{e.preventDefault();setFailed('3D graphics paused. Reload the page to restore the game.');};renderer.domElement.addEventListener('webglcontextlost',contextLost);
+  const disposeWeather=installWeather(renderer,scene,camera);
   function animate(ms:number){if(disposed)return;frame=requestAnimationFrame(animate);const delta=Math.min((ms-last)/1000,.05);last=ms;const l=live.current,p=practice.current,wall=Date.now(),s=l.state;let rs:Runner[],running:boolean,round:number,me:number,t:number;
    if(s){rs=s.runners||[newRunner(),newRunner()];running=!!s.start&&!s.finished&&l.now>=s.start;round=s.round;me=s.me;t=l.now;if(round!==lastRound){positions[0]=positions[1]=0;lastRound=round;predicted.current={until:0};}}
    else {rs=p.rs;running=p.running;round=1;me=0;t=wall;if(p.running){const other=rs[1],next=hurdle(other.lastObstacle+1,1);if(next.distance-other.distance<4&&next.lane===other.lane&&wall-other.jumpAt>1400)controlRunner(other,'jump',wall);if(wall>=other.boostReadyAt+2000)controlRunner(other,'boost',wall);const outcome=advanceRunners(rs,p.last,wall,1);p.last=wall;if(outcome){p.running=false;p.winner=outcome.winner;}}}
@@ -56,7 +58,7 @@ export default function SkyDash({state,now,onMove}:Props){
   }
   // live.now is refreshed by the parent clock; the render loop interpolates positions.
   frame=requestAnimationFrame(animate);setLoaded(true);
-  return()=>{disposed=true;cancelAnimationFrame(frame);resize.disconnect();renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;if(m.geometry)m.geometry.dispose();});materials.forEach(m=>m.dispose());renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;cancelAnimationFrame(frame);resize.disconnect();renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;if(m.geometry)m.geometry.dispose();});materials.forEach(m=>m.dispose());disposeWeather();renderer.dispose();renderer.domElement.remove();};
  },[]);
  return <div className="sky-game">
   <div className="sky-viewport"><div className="sky-canvas" ref={mount}/>{!loaded&&!failed&&<div className="sky-message">Opening the floating gardens…</div>}{failed&&<div className="sky-message">{failed}</div>}

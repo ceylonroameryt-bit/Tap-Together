@@ -1,4 +1,6 @@
 'use client';
+import WorldPanel from '@/components/world/WorldPanel';
+import {activeWorld} from '@/game/weather/WeatherRuntime';
 import {useState,useEffect,useRef,type CSSProperties} from 'react';
 import FishingPond from '@/components/game/FishingPond';
 import FrogGarden from '@/components/game/FrogGarden';
@@ -26,7 +28,7 @@ export default function Home(){
  }
  async function enter(a:string){
   if(restoring)return;if(!name.trim()){setError('Add your name first.');return;}if(commandFlight.current)return;commandFlight.current=true;setBusy(true);
-  try{const d=await api(a,{name,code:entry.trim().toUpperCase()});auth.current={code:d.code,token:d.token!};lastVersion.current=-1;safeStore.setItem('tap-together-session',JSON.stringify(auth.current));safeStore.setItem('tap-together-name',name);setCode(d.code);apply(d);if(a==='create'&&selected!=='race')apply(await api('select',{game:selected,requestId:crypto.randomUUID()}));setError('');}catch(e){setError((e as Error).message);}finally{setBusy(false);commandFlight.current=false;}
+  try{const d=await api(a,{name,code:entry.trim().toUpperCase(),...(a==='create'&&activeWorld()?{location:activeWorld()!.location,timeMode:activeWorld()!.mode}:{})});auth.current={code:d.code,token:d.token!};lastVersion.current=-1;safeStore.setItem('tap-together-session',JSON.stringify(auth.current));safeStore.setItem('tap-together-name',name);setCode(d.code);apply(d);if(a==='create'&&selected!=='race')apply(await api('select',{game:selected,requestId:crypto.randomUUID()}));setError('');}catch(e){setError((e as Error).message);}finally{setBusy(false);commandFlight.current=false;}
  }
  useEffect(()=>{
   const invite=new URLSearchParams(location.search).get('room')||'';setEntry(invite);setName(safeStore.getItem('tap-together-name')||'');const saved=safeStore.getItem('tap-together-session');
@@ -53,6 +55,7 @@ export default function Home(){
   <a href="#play-area" className="skip-link">Skip to game</a>
   <header><a className="brand" href="/">tap<span>together</span><i>✦</i></a><nav aria-label="Main navigation"><a href="#game-library">All games</a><button onClick={openRoom}>{s?'Your room':'Play together'}</button></nav></header>
   <div className="intro compact-intro"><div><div className="eyebrow">YOUR LITTLE ARCADE</div><h1>A little play. <em>A lot closer.</em></h1></div><span className="online-label">12 games · 3 solo modes</span></div>
+  <WorldPanel state={s} now={now} onAction={action}/>
   <nav className="game-switcher" aria-label="Choose a game">{games.map(g=><button key={g.id} aria-pressed={game.id===g.id} disabled={restoring||busy||!!s&&(s.me!==0||playing)} onClick={()=>pick(g.id)}><span aria-hidden="true">{g.icon}</span>{gameLooks[g.id].name}</button>)}</nav>
   {s&&(s.me!==0||playing)&&<p className="switch-help">{playing?'Finish the round to switch games.':'Your partner chooses the next game between rounds.'}</p>}
   <div className="workspace">

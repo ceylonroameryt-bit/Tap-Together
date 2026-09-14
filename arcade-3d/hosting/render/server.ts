@@ -3,17 +3,18 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve,extname,sep} from 'node:path';
 import {POST} from '../../app/api/game/route';
+import {POST as worldPOST} from '../../app/api/world/route';
 const root=fileURLToPath(new URL('./client/',import.meta.url));
 const types:Record<string,string>={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.woff2':'font/woff2'};
 createServer(async(req,res)=>{
  try{
   const pathname=new URL(req.url||'/','http://localhost').pathname;
   if(pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end('{"ok":true}');return;}
-  if(pathname==='/api/game'){
+  if(pathname==='/api/game'||pathname==='/api/world'){
    if(req.method!=='POST'){res.writeHead(405,{Allow:'POST'});res.end();return;}
    let size=0;const chunks:Buffer[]=[];
    for await(const chunk of req){size+=chunk.length;if(size>4096){res.writeHead(413,{'Content-Type':'application/json'});res.end('{"error":"Request too large."}');return;}chunks.push(chunk);}
-   const response=await POST(new Request('http://localhost/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:Buffer.concat(chunks).toString()}));
+   const response=await (pathname==='/api/world'?worldPOST:POST)(new Request('http://localhost/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:Buffer.concat(chunks).toString()}));
    res.writeHead(response.status,Object.fromEntries(response.headers));res.end(await response.text());return;
   }
   if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);res.end();return;}

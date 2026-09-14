@@ -1,0 +1,4 @@
+import {locationSchema} from '@/services/location/location.service';
+import {geocode} from '@/services/location/geocoding.service';
+import {weatherFor} from '@/services/weather/weather.service';
+export async function POST(req:Request){try{const b=await req.json() as Record<string,unknown>;if(b.action==='search'){if(typeof b.query!=='string'||b.query.trim().length<2||b.query.length>100)return Response.json({results:[]});return Response.json({results:await geocode(b.query)},{headers:{'Cache-Control':'no-store'}});}const l=locationSchema.safeParse(b.location);if(b.action!=='weather'||!l.success)return Response.json({error:'Choose a valid location.'},{status:400});return Response.json({weather:await weatherFor(l.data)},{headers:{'Cache-Control':'no-store'}});}catch{return Response.json({error:'Location search is temporarily unavailable. Try a suggested city or search again.'},{status:503});}}

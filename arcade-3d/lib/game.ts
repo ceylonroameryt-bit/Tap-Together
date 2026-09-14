@@ -1,3 +1,5 @@
+import type {SharedWorld} from '../services/weather/weather.mapper';
+import {isRain,phase} from '../services/weather/weather.mapper';
 import {newAngler,fishMove,type Angler} from './fishing';
 import {newGarden,gardenMove,type Garden} from './garden';
 import {newRunner,controlRunner,advanceRunners,type Runner} from './runner';
@@ -18,7 +20,7 @@ export const games = [
 export const reactions=['💗','😂','🥺','👏','😘','🔥'];
 export const moodChoices=['🍕','🍿','🌅','🏖️','🧸','🎮'];
 export type Player={name:string,token:string,ready:boolean,taps:number,choice:string,reaction:number|null,score:number,pairs:number,lastSeen:number,lastAction:number,emoji?:{value:string,at:number},feedback?:string,requestIds?:string[]};
-export type State={game:string,round:number,players:Player[],start:number,deadline:number,winner:number|null,finished:boolean,board:string[],turn:number,moves:number,abortVotes:number[],history:{round:number,game:string,winner:number,at:number}[],memory?:{deck:string[],matched:number[],flipped:number[],hideAt:number},number?:{secret:number,low:number,high:number,last:string},word?:{answer:string,letters:string,hint:string},prompt?:string,runners?:Runner[],raceAt?:number,garden?:Garden,anglers?:Angler[]};
+export type State={world?:SharedWorld,game:string,round:number,players:Player[],start:number,deadline:number,winner:number|null,finished:boolean,board:string[],turn:number,moves:number,abortVotes:number[],history:{round:number,game:string,winner:number,at:number}[],memory?:{deck:string[],matched:number[],flipped:number[],hideAt:number},number?:{secret:number,low:number,high:number,last:string},word?:{answer:string,letters:string,hint:string},prompt?:string,runners?:Runner[],raceAt?:number,garden?:Garden,anglers?:Angler[]};
 export type GameView=State&{me:number};
 export function random(n:number){return crypto.getRandomValues(new Uint32Array(1))[0]%n;}
 function shuffle<T>(a:T[]){for(let i=a.length-1;i>0;i--){const j=random(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -36,7 +38,7 @@ export function createState(p:Player):State{const s={game:'race',round:0,players
 function finish(s:State,winner:number,now:number,award=true){if(s.finished)return;s.finished=true;s.winner=winner;if(award)s.players.forEach((p,i)=>p.score+=winner===-2?2:winner===-1?1:winner===i?3:0);s.history.unshift({round:s.round,game:s.game,winner,at:now});s.history=s.history.slice(0,8);}
 function higher(s:State,metric:(p:Player)=>number){const a=metric(s.players[0]),b=metric(s.players[1]);return a===b?-1:a>b?0:1;}
 export function tick(s:State,now:number){
- if(s.game==='garden'&&s.garden&&s.start&&!s.finished){s.garden.weather=['sun','rain','night'][Math.floor(Math.max(0,now-s.start)/30000)%3];}
+ if(s.game==='garden'&&s.garden&&s.start&&!s.finished){s.garden.weather=s.world?.current?(isRain(s.world.current.weather.type)?'rain':phase(s.world.current,now)==='night'?'night':'sun'):'sun';}
  if(s.game==='race'&&s.start&&now>=s.start&&!s.finished&&s.runners){const end=Math.min(now,s.deadline||now);const outcome=advanceRunners(s.runners,Math.max(s.raceAt||s.start,s.start),end,s.round);s.raceAt=end;if(outcome)finish(s,outcome.winner,outcome.at);}
  if(s.memory?.hideAt&&now>=s.memory.hideAt){s.memory.flipped=[];s.memory.hideAt=0;s.turn=1-s.turn;s.moves++;}
  if(!s.finished&&s.deadline&&now>=s.deadline){const winner=s.game==='fishing'?(s.anglers![0].points===s.anglers![1].points?-1:s.anglers![0].points>s.anglers![1].points?0:1):s.game==='race'?(s.runners?.[0].distance===s.runners?.[1].distance?-1:(s.runners?.[0].distance||0)>(s.runners?.[1].distance||0)?0:1):s.game==='hearts'?higher(s,p=>p.taps):s.game==='memory'?higher(s,p=>p.pairs):s.game==='reaction'?higher(s,p=>p.reaction===null?-100000:-p.reaction):-1;finish(s,winner,now);}
@@ -60,8 +62,8 @@ export function act(s:State,me:number,b:Command,now:number){
  if(['flip','drop','move','guess'].includes(b.action)&&b.expected!==s.moves)throw Error('The board changed. Please try again.');
  if(['flip','drop','move','guess'].includes(b.action)&&s.turn!==me)throw Error('It is your partner’s turn.');
  switch(b.action){
- case 'fish':if(s.game!=='fishing'||!s.anglers)break;fishMove(s.anglers[me],b.value||'',now);if(s.anglers[me].catches>=6)finish(s,me,now);break;
- case 'garden':if(s.game!=='garden'||!s.garden)break;gardenMove(s.garden,me,b.value||'',b.cell??0,b.choice||'daisy',now);if(s.garden.harvests>=12)finish(s,-2,now);break;
+ case 'fish':if(s.game!=='fishing'||!s.anglers)break;fishMove(s.anglers[me],b.value||'',now,s.world?.current);if(s.anglers[me].catches>=6)finish(s,me,now);break;
+ case 'garden':if(s.game!=='garden'||!s.garden)break;gardenMove(s.garden,me,b.value||'',b.cell??0,b.choice||'daisy',now,s.world?.current);if(s.garden.harvests>=12)finish(s,-2,now);break;
  case 'run':if(s.game!=='race'||!s.runners)break;if(!['left','right','jump','boost'].includes(b.value||''))throw Error('Unknown movement.');controlRunner(s.runners[me],b.value!,now);break;
  case 'heart':if(s.game!=='hearts')break;if(b.expected===p.taps&&b.cell===(p.taps*7+s.round*3)%9){p.taps++;if(p.taps===12)finish(s,me,now);}break;
  case 'react':if(s.game!=='reaction'||p.reaction!==null)break;p.reaction=now<s.start||(b.ms??-1)<0?99999:Math.round(Math.max(0,Math.min(99998,b.ms??99998)));if(s.players.every(p=>p.reaction!==null))finish(s,higher(s,p=>-p.reaction!),now);break;

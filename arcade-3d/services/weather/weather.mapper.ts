@@ -1,0 +1,13 @@
+export type GameWeather='clear'|'partly_cloudy'|'cloudy'|'fog'|'light_rain'|'rain'|'heavy_rain'|'thunderstorm'|'windy'|'light_snow'|'snow'|'heavy_snow';
+export type Location={country:string;countryCode:string;city:string;latitude:number;longitude:number;timezone:string;selectedAt:number;region?:string};
+export type Weather={type:GameWeather;temperature:number|null;feelsLike:number|null;humidity:number|null;wind:number;sunrise:number|null;sunset:number|null;isDay:boolean;fetchedAt:number;expiresAt:number;unavailable:boolean;provider:string;rawCode:number|null};
+export type World={location:Location;weather:Weather;mode:'real'|'relaxed';startedAt:number;seed:number;changedAt:number};
+export type SharedWorld={current?:World;proposal?:{id:string;location:Location;mode:'real'|'relaxed';by:number;at:number};inventory:Record<string,number>;collectedAt:number;questCount:number;questRewarded?:string;decorations?:string[]};
+export const isRain=(w:GameWeather)=>['light_rain','rain','heavy_rain','thunderstorm'].includes(w);
+export const isSnow=(w:GameWeather)=>w.includes('snow');
+export function temperatureBand(t:number|null){return t===null?'Unknown':t< -5?'Extreme cold':t<=5?'Cold':t<=15?'Cool':t<=25?'Mild':t<=32?'Warm':'Hot';}
+export function season(l:Location,now:number){const month=Number(new Intl.DateTimeFormat('en',{timeZone:l.timezone,month:'numeric'}).format(now));if(Math.abs(l.latitude)<23.44)return 'Tropical';const north=['Winter','Spring','Summer','Autumn'][Math.floor(month%12/3)];return l.latitude>=0?north:({Winter:'Summer',Spring:'Autumn',Summer:'Winter',Autumn:'Spring'} as Record<string,string>)[north];}
+export function localClock(l:Location,now:number){return new Intl.DateTimeFormat('en-GB',{timeZone:l.timezone,hour:'2-digit',minute:'2-digit'}).format(now);}
+export function phase(w:World,now:number){if(w.mode==='relaxed'){const h=((now-w.startedAt)/50000+12)%24;return h<5||h>=21?'night':h<7?'dawn':h<10?'morning':h<17?'day':h<19?'sunset':'evening';}const {sunrise:r,sunset:s}=w.weather;if(!r||!s)return w.weather.isDay?'day':'night';if(now<r-1800000||now>s+3600000)return 'night';if(now<r+1800000)return 'dawn';if(now<r+10800000)return 'morning';if(now<s-1800000)return 'day';if(now<s+1800000)return 'sunset';return 'evening';}
+export function fallback():Weather{return {type:'partly_cloudy',temperature:null,feelsLike:null,humidity:null,wind:0,sunrise:null,sunset:null,isDay:true,fetchedAt:0,expiresAt:Date.now()+120000,unavailable:true,provider:'unavailable',rawCode:null};}
+export const label=(w:GameWeather)=>w.replaceAll('_',' ').replace(/^./,s=>s.toUpperCase());

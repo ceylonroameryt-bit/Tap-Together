@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS weather_cache (id TEXT PRIMARY KEY, payload TEXT NOT NULL, fetched_at INTEGER NOT NULL, expires_at INTEGER NOT NULL);

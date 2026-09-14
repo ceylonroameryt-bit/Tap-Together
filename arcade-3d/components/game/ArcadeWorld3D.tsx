@@ -1,4 +1,5 @@
 'use client';
+import {installWeather} from '@/game/weather/WeatherEffects';
 import {useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
 import {gameLooks} from '@/lib/game-look';
@@ -66,6 +67,7 @@ export default function ArcadeWorld3D({game,state,now,busy,onAction}:Props){
   const lost=(e:Event)=>{e.preventDefault();setFault('3D paused on this device. Use the controls below, or reload to restore the scene.');};renderer.domElement.addEventListener('webglcontextlost',lost);
   function resize(){const w=el!.clientWidth,h=el!.clientHeight;renderer.setSize(w,h);const aspect=w/h,halfWidth=game==='connect'?5.4:5.05,halfHeight=game==='connect'?4.0:4.6;const y=Math.max(halfHeight,halfWidth/aspect);camera.left=-y*aspect;camera.right=y*aspect;camera.top=y;camera.bottom=-y;camera.updateProjectionMatrix();}const observer=new ResizeObserver(resize);observer.observe(el);resize();
   let frame=0,previous=performance.now();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const disposeWeather=installWeather(renderer,scene,camera);
   function draw(t:number){frame=requestAnimationFrame(draw);if(document.hidden)return;const dt=Math.min(.1,(t-previous)/1000);previous=t;const v=live.current,s=v.state,opts=options(game,s,v.now,v.busy),player=s?.players[s.me];
    for(const a of animated){const o=a.object;
     if(a.kind==='letter'){o.position.y=reduced?0:Math.sin(t*.002+a.index*.9)*.12;o.rotation.y=reduced?0:Math.sin(t*.001+a.index)*.055;}
@@ -87,7 +89,7 @@ export default function ArcadeWorld3D({game,state,now,busy,onAction}:Props){
    }
    renderer.render(scene,camera);
   }frame=requestAnimationFrame(draw);
-  return()=>{cancelAnimationFrame(frame);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',pd);renderer.domElement.removeEventListener('pointerup',pu);renderer.domElement.removeEventListener('webglcontextlost',lost);resources.forEach(r=>r.dispose());renderer.dispose();renderer.domElement.remove();};
+  return()=>{cancelAnimationFrame(frame);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',pd);renderer.domElement.removeEventListener('pointerup',pu);renderer.domElement.removeEventListener('webglcontextlost',lost);resources.forEach(r=>r.dispose());disposeWeather();renderer.dispose();renderer.domElement.remove();};
  },[game,state?.round,state?.word?.letters]);
  return <div className={`arcade-world game-${game}`}>
   <div className="world-caption"><span>{gameLooks[game].world}</span><span>{game==='number'?'Find the secret number':game==='words'?'Tap letters or type below':'Tap an object to play'}</span></div>

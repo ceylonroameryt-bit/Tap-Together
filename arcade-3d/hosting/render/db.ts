@@ -3,6 +3,7 @@ import {mkdirSync} from 'node:fs';
 mkdirSync('/tmp/tap-together',{recursive:true});
 const connection=new DatabaseSync('/tmp/tap-together/rooms.sqlite');
 connection.exec('CREATE TABLE IF NOT EXISTS rooms (code TEXT PRIMARY KEY,state TEXT NOT NULL,revision INTEGER NOT NULL,expires INTEGER NOT NULL)');
+connection.exec('CREATE TABLE IF NOT EXISTS weather_cache (id TEXT PRIMARY KEY,payload TEXT NOT NULL,fetched_at INTEGER NOT NULL,expires_at INTEGER NOT NULL)');
 const cleanup=setInterval(()=>connection.prepare('DELETE FROM rooms WHERE expires < ?').run(Date.now()),60000);
 cleanup.unref();
 export function db(){return {prepare(sql:string){return {bind(...args:(string|number)[]){return {
