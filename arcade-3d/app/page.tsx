@@ -16,7 +16,7 @@ export default function Home(){
  const auth=useRef({code:'',token:''}),offset=useRef(0),current=useRef<GameView|null>(null),lastVersion=useRef(-1),commandFlight=useRef(false),lastPing=useRef(0),lastNetwork=useRef(0),minimumRtt=useRef(Infinity);
  const apply=(d:Reply)=>{if(d.code!==auth.current.code||d.revision<lastVersion.current)return;const v=d.state;if(current.current&&v.round<current.current.round)return;lastVersion.current=d.revision;current.current=v;setS(v);setSelected(v.game);};
  async function api(action:string,extra:Record<string,unknown>={}){
-  const sent=Date.now(),abort=new AbortController(),timer=setTimeout(()=>abort.abort(),8000);
+  const sent=Date.now(),abort=new AbortController(),timer=setTimeout(()=>abort.abort(),18000);
   try{const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},signal:abort.signal,body:JSON.stringify({action,...auth.current,round:current.current?.round,...extra})});const d=await r.json() as Reply;
    if(!r.ok)throw Error(d.error||'Could not connect. Please try again.');const elapsed=Date.now()-sent;if(elapsed<=minimumRtt.current+30){minimumRtt.current=Math.min(elapsed,minimumRtt.current);offset.current=d.serverTime-(sent+Date.now())/2;}
    lastNetwork.current=Date.now();setConnected(true);return d;
