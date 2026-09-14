@@ -1,0 +1,10 @@
+import {build as viteBuild} from 'vite';
+import {createRequire} from 'node:module';
+import tailwind from '@tailwindcss/postcss';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const require=createRequire(import.meta.url);
+const {build}=createRequire(require.resolve('wrangler/package.json'))('esbuild');
+await viteBuild({configFile:false,root:path.join(root,'hosting/render'),publicDir:path.join(root,'public'),resolve:{alias:{'@':root}},build:{outDir:path.join(root,'dist-render/client'),emptyOutDir:true},css:{postcss:{plugins:[tailwind()]}}});
+await build({entryPoints:[path.join(root,'hosting/render/server.ts')],outfile:path.join(root,'dist-render/server.mjs'),bundle:true,platform:'node',format:'esm',target:'node22',alias:{'@/lib/db':path.join(root,'hosting/render/db.ts'),'@':root}});
