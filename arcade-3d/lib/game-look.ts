@@ -1,7 +1,7 @@
 export const gameLooks:Record<string,{name:string;world:string;accent:string;bg:string;floor:string;motion:string}>={
  race:{name:'Sky Dash',world:'Floating gardens',accent:'#6551df',bg:'#b8e7f3',floor:'#ad9cde',motion:'Jump, dodge and boost'},
  fishing:{name:'Moonpond',world:'Moonlit lake',accent:'#326ab2',bg:'#243f6a',floor:'#557baf',motion:'Ripples and timed bites'},
- garden:{name:'Frog Garden',world:'Lily island',accent:'#24795d',bg:'#bbebe0',floor:'#93c6a3',motion:'Hopping frogs and growing flowers'},
+ garden:{name:'Frog Village',world:'Lilybrook village',accent:'#24795d',bg:'#bbebe0',floor:'#93c6a3',motion:'Village walks and shared gardens'},
  hearts:{name:'Heart Hunt',world:'Bubblegum skies',accent:'#be386c',bg:'#ffe0ed',floor:'#f9a8c8',motion:'Bobbing hearts and popping catches'},
  reaction:{name:'Ready, Set, Love',world:'Electric arena',accent:'#1a7b78',bg:'#bfece8',floor:'#51aaa2',motion:'A pulsing signal and expanding rings'},
  rps:{name:'Paw, Paper, Scissors',world:'Sunset duel',accent:'#b65326',bg:'#ffe2b0',floor:'#eda967',motion:'Spinning choices and a winner’s podium'},

@@ -1,9 +1,13 @@
+import {villageSpawn,villagePath,walkable,villageCell,villagePlaces} from './village';
 import type {World} from '../services/weather/weather.mapper';
 export type Plot={seed:string;planted:number;readyAt:number;watered:boolean};
-export type Garden={plots:(Plot|null)[];coins:number;harvests:number;level:number;frogCells:number[];weather:string;log:string};
+export type Garden={walkers?:number[];visits?:string[];plots:(Plot|null)[];coins:number;harvests:number;level:number;frogCells:number[];weather:string;log:string};
 export const seeds=[{id:'daisy',name:'Daisy',cost:2,reward:5,grow:24000,color:'#fff2aa'},{id:'rose',name:'Rose',cost:4,reward:9,grow:35000,color:'#ff79b0'},{id:'moon',name:'Moonflower',cost:6,reward:14,grow:45000,color:'#b8abff'}];
 export function newGarden():Garden{return {plots:Array(16).fill(null),coins:16,harvests:0,level:1,frogCells:[12,15],weather:'sun',log:'Plant a seed, water it, then harvest the flower.'};}
 export function gardenMove(g:Garden,who:number,verb:string,cell:number,seed:string,now:number,world?:World){
+ g.walkers??=[...villageSpawn];g.visits??=[];
+ if(verb==='walk'){if(!walkable(cell)||cell!==g.walkers[who]&&!villagePath(g.walkers[who],cell).length)throw Error('Choose an open path or grassy spot.');g.walkers[who]=cell;return;}
+ if(verb==='visit'){const place=villagePlaces.find(p=>p.id===seed);if(!place)throw Error('Choose a village place.');if(g.walkers[who]!==villageCell(place.x,place.z))throw Error('Walk to this place first.');if(!g.visits.includes(place.id)){g.visits.push(place.id);g.coins+=2;g.log=`Discovered ${place.name}! +2 petals.`;}else g.log=place.text;return;}
  if(verb==='upgrade'){const cost=g.level*20;if(g.level>=3)throw Error('Your garden is fully upgraded.');if(g.coins<cost)throw Error(`You need ${cost} petals to upgrade.`);g.coins-=cost;g.level++;g.log=`Garden level ${g.level}! New flowers grow faster.`;return;}
  if(!Number.isInteger(cell)||cell<0||cell>15)throw Error('Choose a garden plot.');
  const plot=g.plots[cell];
@@ -14,4 +18,4 @@ export function gardenMove(g:Garden,who:number,verb:string,cell:number,seed:stri
  g.frogCells[who]=cell;
 }
 
-export function restoreGarden(value:unknown):Garden|null{if(!value||typeof value!=='object')return null;const g=value as Garden;if(!Array.isArray(g.plots)||g.plots.length!==16||!Array.isArray(g.frogCells)||g.frogCells.length!==2||!g.frogCells.every(n=>Number.isInteger(n)&&n>=0&&n<16)||!Number.isFinite(g.coins)||g.coins<0||!Number.isInteger(g.harvests)||g.harvests<0||![1,2,3].includes(g.level)||!['sun','rain','night'].includes(g.weather)||typeof g.log!=='string')return null;if(!g.plots.every(p=>p===null||(typeof p==='object'&&seeds.some(s=>s.id===p.seed)&&Number.isFinite(p.planted)&&Number.isFinite(p.readyAt)&&p.readyAt>=p.planted&&typeof p.watered==='boolean')))return null;return g;}
+export function restoreGarden(value:unknown):Garden|null{if(!value||typeof value!=='object')return null;const g=value as Garden;if(!Array.isArray(g.plots)||g.plots.length!==16||!Array.isArray(g.frogCells)||g.frogCells.length!==2||!g.frogCells.every(n=>Number.isInteger(n)&&n>=0&&n<16)||!Number.isFinite(g.coins)||g.coins<0||!Number.isInteger(g.harvests)||g.harvests<0||![1,2,3].includes(g.level)||!['sun','rain','night'].includes(g.weather)||typeof g.log!=='string')return null;if(!g.plots.every(p=>p===null||(typeof p==='object'&&seeds.some(s=>s.id===p.seed)&&Number.isFinite(p.planted)&&Number.isFinite(p.readyAt)&&p.readyAt>=p.planted&&typeof p.watered==='boolean')))return null;if(g.walkers&&(!Array.isArray(g.walkers)||g.walkers.length!==2||!g.walkers.every(walkable)))return null;if(g.visits&&(!Array.isArray(g.visits)||!g.visits.every(id=>villagePlaces.some(p=>p.id===id))))return null;return g;}

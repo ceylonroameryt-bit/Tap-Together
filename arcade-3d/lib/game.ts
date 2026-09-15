@@ -5,7 +5,7 @@ import {newGarden,gardenMove,type Garden} from './garden';
 import {newRunner,controlRunner,advanceRunners,type Runner} from './runner';
 export const games = [
  {id:'fishing',icon:'🎣',title:'Moonpond Anglers',desc:'Read the ripples. Reel in a perfect catch.',tag:'SOLO + DUEL',rules:'Cast a line, wait until the bite meter turns green, then reel. Reeling early or late loses the fish and resets your combo. Catch six fish to finish. A streak of catches earns bonus pond points. Solo rounds last 90 seconds. In a shared room, the first to six catches wins; at the time limit, most pond points wins.'},
-  {id:'garden',icon:'🐸',title:'Lily & Lumi: Frog Garden',desc:'Grow a little world, alone or together.',tag:'SOLO + CO-OP',rules:'Solo: plant, water and harvest flowers in a garden saved on this device. Together: both ready up, then harvest 12 flowers in 3 minutes. Share petals and upgrade the garden to grow faster. Rain speeds up newly planted flowers. Tap a plot, choose seeds, then plant, water or harvest.'},
+  {id:'garden',icon:'🐸',title:'Lily & Lumi: Frog Village',desc:'Explore a cosy village, alone or together.',tag:'SOLO + CO-OP',rules:'Explore Lilybrook with tap-to-walk paths, cottages, a bakery, a pond and a community garden. Visit seven landmarks to earn petals. Solo: plant, water and harvest flowers, saved on this device. Together: both ready up, then harvest 12 flowers in 3 minutes. Share petals and upgrade the garden to grow faster. Rain speeds up newly planted flowers. Tap a plot, choose seeds, then plant, water or harvest.'},
   {id:'race',icon:'🐇',title:'Bunny & Turtle: Sky Dash',desc:'A 3D race through the floating gardens.',tag:'3D MULTIPLAYER',rules:'Run automatically. Use left/right to switch lanes, Space or Jump to clear hurdles, and Shift or Boost for a burst of speed. Collect stars along the way. First to 240 metres wins.'},
   {id:'hearts',icon:'💗',title:'Heart Hunt',desc:'Catch the heart before it moves.',tag:'QUICK FINGERS',rules:'Tap only the pink heart. Catch 12 hearts before your partner.'},
   {id:'reaction',icon:'⚡',title:'Ready, Set, Love',desc:'Wait for green. Be the quickest.',tag:'REACTION',rules:'Wait for the green signal, then tap once. An early tap loses. Times are measured on your device.'},
@@ -47,6 +47,7 @@ export type Command={action:string,game?:string,round?:number,taps?:number,ms?:n
 export function act(s:State,me:number,b:Command,now:number){
  const p=s.players[me];
  if(b.requestId&&p.requestIds?.includes(b.requestId))return;
+ if(b.action==='garden'&&s.game==='garden'&&s.garden&&['walk','visit'].includes(b.value||'')){gardenMove(s.garden,me,b.value!,b.cell??0,b.choice||'',now,s.world?.current);if(b.requestId)p.requestIds=[...(p.requestIds||[]),b.requestId].slice(-20);return;}
  if(b.action==='emoji'){if(!reactions.includes(b.value||''))throw Error('Choose one of the reactions.');if(now-(p.emoji?.at||0)<1000)return;p.emoji={value:b.value!,at:now};return;}
  if(b.action==='select'){if(me!==0)throw Error('The room creator picks the game.');if(s.start&&!s.finished)throw Error('Finish this round first, or both vote to end it.');if(!games.some(g=>g.id===b.game))throw Error('Unknown game.');reset(s,b.game);}
  else if(b.action==='ready'){
